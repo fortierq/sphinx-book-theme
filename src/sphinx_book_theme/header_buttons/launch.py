@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import urlencode
@@ -163,8 +164,7 @@ def add_launch_buttons(
         )
 
     if basthon_url:
-        lang = app.env.metadata[pagename].language_info.name.lower()
-        print(lang)
+        lang = json.loads(app.env.metadata[pagename]["language_info"])["name"].lower()
         if lang == "python":
             lang = ""
         url = f"{basthon_url}/{lang}/?from=https://raw.githubusercontent.com/{org}/{repo}/{branch}/{path_rel_repo}"
