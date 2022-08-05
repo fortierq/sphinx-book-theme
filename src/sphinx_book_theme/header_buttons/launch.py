@@ -164,7 +164,7 @@ def add_launch_buttons(
         )
 
     if basthon_url:
-        print(app.env.metadata[pagename)
+        print(app.env.metadata[pagename])
         lang = json.loads(app.env.metadata[pagename]["language_info"])["name"].lower()
         if lang == "python":
             lang = ""
