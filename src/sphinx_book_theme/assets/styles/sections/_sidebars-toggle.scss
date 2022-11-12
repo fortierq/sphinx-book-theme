@@ -6,18 +6,18 @@ input.sidebar-toggle {
   position: absolute;
 }
 
-input#__primary {
+input#__navigation {
   // On wide screens, checking will hide everything
   @media (min-width: $breakpoint-md) {
     &:checked {
-      & ~ .bd-container .bd-sidebar {
+      & ~ .container-xl #site-navigation {
         visibility: hidden;
         opacity: 0;
         margin-left: -$leftbar-width-wide;
       }
 
       // When we hide the sidebar on widescreen, add some padding to content
-      & ~ .bd-container .bd-main {
+      & ~ .container-xl #main-content {
         padding-left: 4rem;
         padding-right: 4rem;
       }
@@ -26,7 +26,7 @@ input#__primary {
 
   // On narrow screens, *unchecking* will hide everything, so it's hidden by default
   @media (max-width: $breakpoint-md) {
-    &:not(:checked) ~ .bd-container .bd-sidebar {
+    &:not(:checked) ~ .container-xl #site-navigation {
       visibility: hidden;
       opacity: 0;
       margin-left: -$leftbar-width-mobile;
@@ -34,10 +34,10 @@ input#__primary {
   }
 }
 
-input#__secondary {
+input#__page-toc {
   // On narrow screens, it's hidden by default
   @media (max-width: $breakpoint-md) {
-    &:not(:checked) ~ .bd-container .bd-toc {
+    &:not(:checked) ~ .container-xl .bd-toc {
       visibility: hidden;
       opacity: 0;
       margin-right: -$leftbar-width-mobile;
@@ -48,8 +48,7 @@ input#__secondary {
 // **** Utility functions ****
 // Label at the top of the page
 label.overlay {
-  &.overlay-primary,
-  &.overlay-secondary {
+  &.overlay-navbar {
     background-color: rgba(0, 0, 0, 0.54);
   }
   height: 0;
@@ -63,11 +62,11 @@ label.overlay {
 // On narrow screens, we use this overlay to close the sidebar
 @media (max-width: $breakpoint-md) {
   input:checked + label.overlay {
-    &.overlay-primary {
+    &.overlay-navbar {
       z-index: $zindex-offcanvas - 1; // This puts it just below the primary sidebar
     }
 
-    &.overlay-secondary {
+    &.overlay-pagetoc {
       z-index: $zindex-sticky - 1; // This puts it just below the header
     }
     height: 100%;

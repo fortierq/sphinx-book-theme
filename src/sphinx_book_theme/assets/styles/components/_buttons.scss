@@ -110,7 +110,7 @@ div.header-article-main {
 /**
  * In-page table of contents
  */
-.headerbtn-secondary {
+.headerbtn-page-toc {
   // Hide the button on wide screens since we display the TOC.
   display: block;
   @media (min-width: $breakpoint-md) {

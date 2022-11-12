@@ -31,21 +31,18 @@ class HandleFootnoteTransform(SphinxPostTransform):
                 ):
                     parent = foot_node.parent
                     # second children of footnote node is the content text
-                    foot_node_content = foot_node.children[1].children
+                    text = foot_node.children[1].astext()
 
                     sidenote = SideNoteNode()
                     para = docutil_nodes.inline()
                     # first children of footnote node is the label
                     label = foot_node.children[0].astext()
 
-                    if foot_node_content[0].astext().startswith("{-}"):
+                    if text.startswith("{-}"):
                         # marginnotes will have content starting with {-}
                         # remove the number so it doesn't show
                         para.attributes["classes"].append("marginnote")
-                        foot_node_content[0] = docutil_nodes.Text(
-                            foot_node_content[0].replace("{-}", "")
-                        )
-                        para.children = foot_node_content
+                        para.append(docutil_nodes.Text(text.replace("{-}", "")))
 
                         sidenote.attributes["names"].append(f"marginnote-role-{label}")
                     else:
@@ -53,8 +50,7 @@ class HandleFootnoteTransform(SphinxPostTransform):
                         # in this case we keep the number
                         superscript = docutil_nodes.superscript("", label)
                         para.attributes["classes"].append("sidenote")
-                        parachildren = [superscript] + foot_node_content
-                        para.children = parachildren
+                        para.extend([superscript, docutil_nodes.Text(text)])
 
                         sidenote.attributes["names"].append(f"sidenote-role-{label}")
                         sidenote.append(superscript)
