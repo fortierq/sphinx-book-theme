@@ -165,11 +165,15 @@ def add_launch_buttons(
 
     if basthon_url:
         print(app.env.metadata[pagename])
-        lang = json.loads(app.env.metadata[pagename]["language_info"])["name"].lower()
-        if lang == "python":
+        try:
+            lang = json.loads(app.env.metadata[pagename]["kernelspec"])["language"].lower()
+            if lang == "python":
+                lang = ""
+            else:
+                lang = f"kernel={lang}&"
+        except Exception as e:
+            print(e)
             lang = ""
-        else:
-            lang = f"kernel={lang}&"
         url = f"{basthon_url}/?{lang}from=https://raw.githubusercontent.com/{org}/{repo}/{branch}/{path_rel_repo}"
         open_module = app.env.metadata[pagename].get("basthon_module", None)
         if open_module:
