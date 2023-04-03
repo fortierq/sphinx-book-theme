@@ -82,7 +82,7 @@ def test_build_book(sphinx_build_factory, file_regression):
     for filename, kernel in kernels_expected.items():
         ntbk_html = sphinx_build.html_tree("section1", filename)
         thebe_config = ntbk_html.find("script", attrs={"type": "text/x-thebe-config"})
-        kernel_name = 'kernelName: "{}",'.format(kernel)
+        kernel_name = 'name: "{}",'.format(kernel)
         if kernel_name not in thebe_config.prettify():
             raise AssertionError(f"{kernel_name} not in {kernels_expected}")
 
@@ -128,16 +128,19 @@ def test_build_book(sphinx_build_factory, file_regression):
     for page in sphinx_build.outdir.joinpath("titles").rglob("**/page-*"):
         page_html = BeautifulSoup(page.read_text("utf8"), "html.parser")
         page_toc = page_html.find("div", attrs={"class": "bd-toc"})
-        file_regression.check(
-            page_toc.prettify(),
-            basename=f"build__pagetoc--{page.with_suffix('').name}",
-            extension=".html",
-            encoding="utf8",
-        )
+        if page_toc:
+            file_regression.check(
+                page_toc.prettify(),
+                basename=f"build__pagetoc--{page.with_suffix('').name}",
+                extension=".html",
+                encoding="utf8",
+            )
+        else:
+            # page with no subheadings now does not have the secondary sidebar markup
+            assert len(page_html.find_all("section")) == 1
 
 
 def test_navbar_options_home_page_in_toc(sphinx_build_factory):
-
     sphinx_build = sphinx_build_factory(
         "base", confoverrides={"html_theme_options.home_page_in_toc": True}
     ).build(
@@ -149,25 +152,9 @@ def test_navbar_options_home_page_in_toc(sphinx_build_factory):
     assert "Index with code in title" in str(li)
 
 
-def test_navbar_options_single_page(sphinx_build_factory):
-    """Test that"""
-    sphinx_build = sphinx_build_factory(
-        "base", confoverrides={"html_theme_options.single_page": True}
-    ).build(
-        assert_pass=True
-    )  # type: SphinxBuild
-    sidebar = sphinx_build.html_tree("section1", "ntbk.html").find(
-        "div", id="site-navigation"
-    )
-    assert len(sidebar.find_all("div")) == 0  # Sidebar should be empty
-    assert "single-page" in sidebar.attrs["class"]  # Class added on single page
-
-
 @pytest.mark.parametrize(
     "option,value",
     [
-        ("extra_navbar", "<div>EXTRA NAVBAR</div>"),
-        ("navbar_footer_text", "<div>EXTRA NAVBAR</div>"),
         ("extra_footer", "<div>EXTRA FOOTER</div>"),
     ],
 )
@@ -205,7 +192,7 @@ def test_header_repository_buttons(
     )
 
     header = sphinx_build.html_tree("section1", "ntbk.html").select(
-        ".header-article__right"
+        ".header-article-items__end"
     )
     file_regression.check(
         header[0].prettify(),
@@ -215,13 +202,142 @@ def test_header_repository_buttons(
     )
 
 
+@pytest.mark.parametrize(
+    "provider, repo",
+    [
+        ("", "https://github.com/executablebooks/sphinx-book-theme"),
+        ("github", "https://gh.mycompany.com/executablebooks/sphinx-book-theme"),
+        ("", "https://gitlab.com/gitlab-org/gitlab"),
+        ("", "https://opensource.ncsa.illinois.edu/bitbucket/scm/u3d/3dutilities"),
+        ("gitlab", "https://mywebsite.com/gitlab/gitlab-org/gitlab"),
+    ],
+)
+def test_source_button_url(sphinx_build_factory, file_regression, provider, repo):
+    """Test that source button URLs are properly constructed."""
+    # All buttons on
+    use_issues = "github.com" in repo
+    confoverrides = {
+        "html_theme_options": {
+            "repository_url": repo,
+            "use_repository_button": True,
+            "use_edit_page_button": True,
+            "use_source_button": True,
+            "use_issues_button": use_issues,
+        }
+    }
+    # Decide if we've manually given the provider
+    manual = provider != ""
+
+    # Infer the provider from the names so we can name the regression tests
+    if not provider:
+        for iprov in ["github", "gitlab", "bitbucket"]:
+            if iprov in repo:
+                provider = iprov
+                break
+
+    provider_reg_file = provider
+    if manual:
+        confoverrides["html_theme_options"]["repository_provider"] = provider
+        provider_reg_file = provider_reg_file + "_manual"
+
+    sphinx_build = sphinx_build_factory("base", confoverrides=confoverrides).build(
+        assert_pass=True
+    )
+    # Check that link of each button is correct, and that the icon has right provider
+    links = sphinx_build.html_tree("section1", "ntbk.html").select(
+        ".dropdown-source-buttons .dropdown-menu a"
+    )
+    icons = sphinx_build.html_tree("section1", "ntbk.html").select(
+        ".dropdown-source-buttons .dropdown-menu i"
+    )
+    links = [ii["href"] for ii in links]
+    icons = [str(ii) for ii in icons]
+    check = "\n".join(["\n".join(ii) for ii in zip(links, icons)])
+    file_regression.check(
+        check,
+        basename=f"header__source-buttons--{provider_reg_file}",
+        extension=".html",
+        encoding="utf8",
+    )
+
+
 def test_header_launchbtns(sphinx_build_factory, file_regression):
     """Test launch buttons."""
     sphinx_build = sphinx_build_factory("base").build(assert_pass=True)
     launch_btns = sphinx_build.html_tree("section1", "ntbk.html").select(
-        ".menu-dropdown-launch-buttons"
+        ".dropdown-launch-buttons"
     )
     file_regression.check(launch_btns[0].prettify(), extension=".html", encoding="utf8")
+
+
+def test_empty_header_launchbtns(sphinx_build_factory, file_regression):
+    """Launch buttons should not show at all if no valid launch providers."""
+    # Here we define part of the launch button config, but no valid provider
+    sphinx_build = sphinx_build_factory(
+        "base",
+        confoverrides={
+            "html_theme_options": {"launch_buttons": {"notebook_interface": "notebook"}}
+        },
+    ).build(assert_pass=True)
+    launch_btns = sphinx_build.html_tree("section1", "ntbk.html").select(
+        ".dropdown-launch-buttons"
+    )
+    assert len(launch_btns) == 0
+
+
+@pytest.mark.parametrize(
+    "provider, repo",
+    [
+        ("", "https://github.com/executablebooks/sphinx-book-theme"),
+        ("", "https://gitlab.com/gitlab-org/gitlab"),
+        ("", "https://opensource.ncsa.illinois.edu/bitbucket/scm/u3d/3dutilities"),
+        ("gitlab", "https://mywebsite.com/gitlab/gitlab-org/gitlab"),
+    ],
+)
+def test_launch_button_url(sphinx_build_factory, file_regression, provider, repo):
+    """Test that source button URLs are properly constructed."""
+
+    launch_buttons = {
+        "binderhub_url": "https://mybinder.org",
+        "jupyterhub_url": "https://hub.myorg.edu",
+    }
+    if "github.com" in repo:
+        launch_buttons["colab_url"] = "https://colab.research.google.com"
+        launch_buttons["deepnote_url"] = "https://deepnote.com"
+
+    confoverrides = {
+        "html_theme_options": {
+            "repository_url": repo,
+            "repository_branch": "foo",
+            "path_to_docs": "docs",
+            "launch_buttons": launch_buttons,
+        }
+    }
+
+    sphinx_build = sphinx_build_factory("base", confoverrides=confoverrides).build(
+        assert_pass=True
+    )
+    # Check that link of each button is correct
+    all_links = []
+    for ifile in (("section1", "ntbk.html"), ("section1", "ntbkmd.html")):
+        links = sphinx_build.html_tree(*ifile).select(
+            ".dropdown-launch-buttons .dropdown-menu a"
+        )
+        links = [ii["href"] for ii in links]
+        all_links.append("/".join(ifile))
+        all_links.append("\n".join(links) + "\n")
+
+    if provider == "":
+        provider = [ii for ii in ["github", "gitlab", "bitbucket"] if ii in repo][0]
+    else:
+        provider += "_manual"
+
+    file_regression.check(
+        "\n".join(all_links),
+        basename=f"header__launch-buttons--{provider}",
+        extension=".html",
+        encoding="utf8",
+    )
 
 
 def test_repo_custombranch(sphinx_build_factory, file_regression):
@@ -238,7 +354,7 @@ def test_repo_custombranch(sphinx_build_factory, file_regression):
         },
     ).build(assert_pass=True)
     header = sphinx_build.html_tree("section1", "ntbk.html").select(
-        ".header-article__right"
+        ".header-article-items__end"
     )
     # The Binder link should point to `foo`, as should the `edit` button
     file_regression.check(
@@ -312,7 +428,7 @@ def test_header_fullscreen_button_off(sphinx_build_factory, file_regression):
 
 
 def test_right_sidebar_title(sphinx_build_factory, file_regression):
-    confoverrides = {"html_theme_options.toc_title": "My Contents"}
+    confoverrides = {"html_theme_options.toc_title": "My test content title"}
     sphinx_build = sphinx_build_factory("base", confoverrides=confoverrides).build(
         assert_pass=True
     )
@@ -327,18 +443,6 @@ def test_right_sidebar_title(sphinx_build_factory, file_regression):
     rmtree(str(sphinx_build.src))
 
     confoverrides = {"html_theme_options.toc_title": ""}
-
-
-def test_logo_only(sphinx_build_factory):
-    confoverrides = {"html_theme_options.logo_only": True}
-    sphinx_build = sphinx_build_factory("base", confoverrides=confoverrides).build(
-        assert_pass=True
-    )
-
-    logo_text = sphinx_build.html_tree("page1.html").find_all(
-        "h1", attrs={"id": "site-title"}
-    )
-    assert not logo_text
 
 
 def test_sidenote(sphinx_build_factory, file_regression):

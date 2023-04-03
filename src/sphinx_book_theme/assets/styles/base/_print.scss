@@ -2,10 +2,13 @@
 * Print-specific CSS *
 *********************************************/
 @media print {
-  // Structural elements
-  #jb-print-docs-body {
-    max-width: 90%;
-    margin: auto;
+  .bd-main {
+    .bd-content {
+      margin-left: 2rem;
+      height: auto;
+      // Structural elements
+      #jb-print-docs-body {
+        margin-left: 0rem;
 
     h1 {
       font-size: 3em;
@@ -56,11 +59,40 @@
     display: none;
   }
 
-  blockquote.epigraph {
-    border: none;
-  }
+      // Remove borders to save some ink
+      blockquote.epigraph,
+      aside.margin,
+      aside.sidebar {
+        border: none;
+      }
 
-  .footer {
-    margin-top: 1em;
+      .footer {
+        margin-top: 1em;
+      }
+      // Print-only table of contents
+      #jb-print-toc {
+        margin-bottom: 1.5rem;
+        margin-left: 0rem;
+        .section-nav {
+          border-left: 0px !important;
+          list-style-type: disc !important;
+          margin-left: 3em !important;
+          a {
+            text-decoration: none !important;
+          }
+          li {
+            display: list-item !important;
+          }
+          .nav {
+            display: none;
+          }
+        }
+      }
+    }
+
+    // Hide the footer on printing
+    .bd-footer-content {
+      display: none !important;
+    }
   }
 }

@@ -16,24 +16,25 @@ kernelspec:
 
 This is a page to demonstrate the look and feel of Jupyter Notebook elements.
 
-
 ## Hiding elements
 
-### Hiding inputs
+### Hide cells
+
+The following cell is hidden.
+It also has a `thebe-init` tag which means it will be executed when you initialize Thebe.
 
 ```{code-cell} ipython3
-:tags: [remove_cell]
+:tags: [hide-cell, thebe-init]
 
 # Generate some code that we'll use later on in the page
 import numpy as np
 import matplotlib.pyplot as plt
-
-square = np.random.randn(100, 100)
-wide = np.random.randn(100, 1000)
 ```
 
+### Hide inputs
+
 ```{code-cell} ipython3
-:tags: [hide_input]
+:tags: [hide-input]
 
 # Hide input
 square = np.random.randn(100, 100)
@@ -46,10 +47,10 @@ fig, ax = plt.subplots()
 ax.imshow(wide)
 ```
 
-### Hiding outputs
+### Hide outputs
 
 ```{code-cell} ipython3
-:tags: [hide_output]
+:tags: [hide-output]
 
 # Hide output
 square = np.random.randn(100, 100)
@@ -62,7 +63,7 @@ fig, ax = plt.subplots()
 ax.imshow(wide)
 ```
 
-### Hiding markdown
+### Hide markdown
 
 ````{toggle}
 ```{note}
@@ -79,10 +80,10 @@ With a body!
 
 +++
 
-### Hiding both inputs and outputs
+### Hide both inputs and outputs
 
 ```{code-cell} ipython3
-:tags: [hide_output, hide_input]
+:tags: [hide-output, hide-input]
 
 square = np.random.randn(100, 100)
 wide = np.random.randn(100, 1000)
@@ -94,10 +95,10 @@ fig, ax = plt.subplots()
 ax.imshow(wide)
 ```
 
-### Hiding the whole cell
+### Hide the whole cell
 
 ```{code-cell} ipython3
-:tags: [hide_cell]
+:tags: [hide-cell]
 
 square = np.random.randn(100, 100)
 wide = np.random.randn(100, 1000)

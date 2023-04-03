@@ -2,8 +2,8 @@ from sphinx.transforms.post_transforms import SphinxPostTransform
 from typing import Any
 from docutils import nodes as docutil_nodes
 from sphinx import addnodes as sphinx_nodes
+from pydata_sphinx_theme.utils import get_theme_options_dict
 from .nodes import SideNoteNode
-import copy
 
 
 class HandleFootnoteTransform(SphinxPostTransform):
@@ -13,7 +13,7 @@ class HandleFootnoteTransform(SphinxPostTransform):
     formats = ("html",)
 
     def run(self, **kwargs: Any) -> None:
-        theme_options = self.env.config.html_theme_options
+        theme_options = get_theme_options_dict(self.app)
         if theme_options.get("use_sidenotes", False) is False:
             return None
         # Cycle through footnote references, and move their content next to the
@@ -60,7 +60,7 @@ class HandleFootnoteTransform(SphinxPostTransform):
                     # so it works w/ margin. Only show one or another depending on
                     # screen width.
                     node_parent = ref_node.parent
-                    para_dup = copy.deepcopy(para)
+                    para_dup = para.deepcopy()
                     # looping to check parent node
                     while not isinstance(
                         node_parent, (docutil_nodes.section, sphinx_nodes.document)
