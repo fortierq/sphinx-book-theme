@@ -120,7 +120,7 @@ def hash_html_assets(app, pagename, templatename, context, doctree):
     hash_assets_for_files(assets, get_html_theme_path() / "static", context)
 
 
-def update_thebe_config(app):
+def update_mode_thebe_config(app):
     """Update thebe configuration with SBT-specific values"""
     theme_options = get_theme_options_dict(app)
     if theme_options.get("launch_buttons", {}).get("thebe") is True:
